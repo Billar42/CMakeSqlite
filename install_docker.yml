@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Установка Docker
+      apt:
+        update_cache: yes
+
+    - name: Установка пакетов для docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Установка пакетов-2 для docker
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Добавление Docker репозитория
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable
+        state: present
+        
+    - name: Установка Docker
+      apt:
+        name: docker-ce
+        state: present
+
+
+
+

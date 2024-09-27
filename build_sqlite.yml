@@ -1,0 +1,43 @@
+---
+- name: Docker compile CMakeList
+  hosts: all
+  become: yes
+  tasks:
+    - name: Download SQLite
+      get_url:
+        url: https://www.sqlite.org/2018/sqlite-amalgamation-3260000.zip
+        dest: /tmp/sqlite-amalgamation-3260000.zip
+        mode: 0755
+
+    - name: Unzip SQLite source
+      unarchive:
+        src: /tmp/sqlite-amalgamation-3260000.zip
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Compile SQLite
+      command: |
+        cmake --build .
+      args:
+        chdir: /tmp/sqlite-amalgamation-3260000
+
+    - name: Create Dockerfile
+      copy:
+        content: |
+          FROM alpine:latest
+          WORKDIR /app
+          RUN apk --no-cache add cmake clang clang-dev make gcc g++ libc-dev linux-headers
+          COPY . /app
+          RUN cmake .
+          RUN cmake --build . -v > log.txt
+          RUN make
+          CMD ["./myproject"]
+        dest: /tmp/Dockerfile
+
+    - name: Build Docker image
+      docker_image:
+        name: sqlite-builder
+        build:
+          path: /tmp/
+        source: build
+        tag: latest
